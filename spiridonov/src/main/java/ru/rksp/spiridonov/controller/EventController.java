@@ -1,38 +1,21 @@
-package ru.rksp.spiridonov.processor.controller;
+package ru.rksp.spiridonov.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.rksp.spiridonov.processor.service.EventService;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
+import ru.rksp.spiridonov.model.DeliveryEvent;
 
 @RestController
 @RequestMapping("/api/v1/events")
-public class EventCountController {
-
+public class EventController {
+    
     @Autowired
-    private EventService eventService;
-
-    @PostMapping("/count")
-    public ResponseEntity<String> getAndSaveCount() {
-        try {
-            Long count = eventService.getEventCount();
-            eventService.saveAggregateToClickHouse(count);
-            return ResponseEntity.ok("Count saved to ClickHouse: " + count);
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/aggregates")
-    public ResponseEntity<?> getAggregates() {
-        try {
-            List<Map<String, Object>> aggregates = eventService.getAggregatesFromClickHouse();
-            return ResponseEntity.ok(aggregates);
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-        }
+    private RabbitTemplate rabbitTemplate;
+    
+    @PostMapping
+    public ResponseEntity<String> receiveEvent(@RequestBody DeliveryEvent event) {
+        rabbitTemplate.convertAndSend("events.raw", event);
+        return ResponseEntity.ok("Event sent to queue successfully");
     }
 }

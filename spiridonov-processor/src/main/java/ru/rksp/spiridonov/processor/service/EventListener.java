@@ -28,7 +28,7 @@ public class EventListener {
             rawEventRepository.save(rawEvent);
             System.out.println("=== Event saved to PostgreSQL with ID: " + rawEvent.getИдентификатор());
         } catch (Exception e) {
-            System.err.println("=== Error processing event: " + e.getMessage());
+            System.err.println("===--- Error processing event: " + e.getMessage());
             e.printStackTrace();
         }
     }
